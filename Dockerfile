@@ -20,7 +20,7 @@ RUN a2enmod remoteip
 
 # Install PHP and extensions (Latest PHP, currently 7.4)
 RUN apt-get install -y libapache2-mod-php
-RUN apt-get install -y php-mysqli php-xml php-gd php-curl
+RUN apt-get install -y php-mysqli php-xml php-gd php-curl php-mbstring
 
 # Copy in the PHP files
 COPY www /var/www/php
@@ -30,7 +30,15 @@ RUN chown -R www-data:www-data /var/www/
 COPY start.sh start.sh
 RUN chmod +x start.sh
 
+# Setup persistent storage
+RUN mkdir /persist
+VOLUME [ "/persist" ]
+
+# Run the setup script for the application
+COPY setup.sh setup.sh
+RUN chmod +x setup.sh && ./setup.sh
+
 EXPOSE 5000
 
 # For now, expose the error logs.
-CMD ./start.sh
+CMD service apache2 start && tail -f /var/log/apache2/error.log
